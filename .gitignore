@@ -1,0 +1,33 @@
+# Mac OS
+**/.DS_Store
+
+# Editors
+**/.vscode
+**/.idea
+
+# Environment
+**/venv
+**/env
+**/.env*
+conn.yml
+
+env.yml
+
+# Python
+**/*.pyc
+**/__pycache__
+
+# Node.js
+**/node_modules
+**/*.log*
+**/*.lock
+
+media/
+
+static/
+
+dev-reqs.txt/
+
+*.sqlite3
+
+.coverage
