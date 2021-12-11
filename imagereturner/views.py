@@ -1,16 +1,11 @@
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
-import json
-import os
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from django.http import FileResponse
 import uuid
 import random
 import requests
 import json
-from fake_headers import Headers
-from bs4 import BeautifulSoup as bs4
+import os
 
 access_token = "94b8c4c694b8c4c694b8c4c68894c2ab6e994b894b8c4c6f50b01863e04926b911fb650"
 
@@ -31,12 +26,16 @@ def resizer(image_name):
     pil_image = Image.open(image_name).resize((1000, 1000)).convert('RGB')
     return pil_image
 
+
 def return_image(request):
     if request.method == "POST":
         request = json.loads(request.body)
         phrase = request["phrase"]
+        print(phrase)
         tags = request["tags"]
-        font = ImageFont.truetype("arial.ttf", random.randint(50, 200))
+        random_font_file = random.choice(os.listdir("imagereturner/fonts"))
+        print(random_font_file)
+        font = ImageFont.truetype(f"imagereturner/fonts/{random_font_file}", random.randint(50, 200))
         result = vk_search(phrase, access_token)
         if result:
             img_data = requests.get(result).content
