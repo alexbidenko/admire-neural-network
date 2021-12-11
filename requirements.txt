@@ -2,3 +2,5 @@ numpy
 tensorflow
 Pillow
 keras
+Django
+requests

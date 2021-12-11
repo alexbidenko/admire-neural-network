@@ -1,6 +1,7 @@
 from django.http import JsonResponse, HttpResponse
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from django.http import FileResponse
+from .neuro import style_transfer
 import uuid
 import random
 import requests
@@ -32,6 +33,7 @@ def resizer(image_name):
 def get_label(phrase):
     font_size = random.randint(100, 300)
     random_font_file = random.choice(os.listdir("imagereturner/fonts"))
+    print(random_font_file)
     font = ImageFont.truetype(f"imagereturner/fonts/{random_font_file}", font_size)
     string_size_in_pixels = font.getsize(phrase)
     label = Image.new(size=string_size_in_pixels, mode="RGBA")
@@ -49,15 +51,13 @@ def creation_date(path_to_file):
         try:
             return stat.st_birthtime
         except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
             return stat.st_mtime
 
 
 def delete_old_files(filename):
     file_path = "trash/" + filename
     date_in_ms = creation_date(file_path)
-    if int(time.time()) -date_in_ms > 60:
+    if int(time.time()) -date_in_ms > 3600:
         os.remove(file_path)
     return date_in_ms
 
@@ -88,5 +88,10 @@ def return_image(request):
             else:
                 pil_image.paste(phrase_label, (random.randint(0, 1000-size[0]), random.randint(0, 1000-size[1])), phrase_label.convert("RGBA"))
             pil_image.save(name)
+            random_style_folder = random.choice(os.listdir("imagereturner/styles"))
+            random_style = random.choice(os.listdir(f"imagereturner/styles/{random_style_folder}"))
+            print(random_style)
+            generated_image = style_transfer(name, f"imagereturner/styles/{random_style_folder}/{random_style}")
+            generated_image.save(name)
             return FileResponse(open(name, "rb"))
         return HttpResponse(status=404)
