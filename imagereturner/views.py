@@ -14,11 +14,11 @@ access_token = "94b8c4c694b8c4c694b8c4c68894c2ab6e994b894b8c4c6f50b01863e04926b9
 
 
 def vk_search(phrase, token):
-    result = requests.get(url= "https://api.vk.com/method/photos.search", params={
+    result = requests.get(url="https://api.vk.com/method/photos.search", params={
         'q': f"{phrase} -цена -руб -₽ -оплата",
         'access_token': token,
         'v': '5.81',
-        })
+    })
     if items := json.loads(result.text)["response"]["items"]:
         result = sorted(random.choice(items)["sizes"], key=lambda x: x["height"], reverse=True)[0]["url"]
         return result
@@ -38,8 +38,8 @@ def get_label(phrase):
     string_size_in_pixels = font.getsize(phrase)
     label = Image.new(size=string_size_in_pixels, mode="RGBA")
     ImageDraw.Draw(label).text((0, 0), phrase,
-                                   (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
-                                   font=font)
+                               (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
+                               font=font)
     return [label, string_size_in_pixels]
 
 
@@ -57,14 +57,58 @@ def creation_date(path_to_file):
 def delete_old_files(filename):
     file_path = "trash/" + filename
     date_in_ms = creation_date(file_path)
-    if int(time.time()) -date_in_ms > 3600:
+    if int(time.time()) - date_in_ms > 3600:
         os.remove(file_path)
     return date_in_ms
 
 
+def return_tags(request):
+    if request.method == "GET":
+        #folder_list = os.listdir("imagereturner/styles")
+        #json_list = {"tags": folder_list}
+        tags = [
+            {
+                "value": "abstractions",
+                "label": "Абстракции"
+            },
+            {
+                "value": "ar_deco",
+                "label": "Ар-деко"
+            },
+            {
+                "value": "bosch",
+                "label": "Босх"
+            },
+            {
+                "value": "food",
+                "label": "Съедобный"
+            },
+            {
+                "value": "giger",
+                "label": "Эрото-механика"
+            },
+            {
+                "value": "medieval",
+                "label": "Средневековый"
+            },
+            {
+                "value": "ornaments",
+                "label": "Этнические узоры"
+            },
+            {
+                "value": "pop_art",
+                "label": "Поп-арт"
+            },
+            {
+                "value": "van_goh",
+                "label": "Импрессионизм"
+            },
+        ]
+        return JsonResponse(tags, safe=False)
+
+
 def return_image(request):
     if request.method == "POST":
-
         downloaded_files = os.listdir("trash")
         list(map(delete_old_files, downloaded_files))
         request = json.loads(request.body)
@@ -81,17 +125,25 @@ def return_image(request):
             phrase_label, size = get_label(phrase)
             if size[0] > 1000:
                 wight = random.randint(800, 900)
-                height = int(size[1]*wight/size[0])
+                height = int(size[1] * wight / size[0])
                 phrase_label = phrase_label.resize((wight, height))
                 pil_image.paste(phrase_label, (random.randint(0, 1000 - wight), random.randint(0, 1000 - height)),
                                 phrase_label.convert("RGBA"))
             else:
-                pil_image.paste(phrase_label, (random.randint(0, 1000-size[0]), random.randint(0, 1000-size[1])), phrase_label.convert("RGBA"))
+                pil_image.paste(phrase_label, (random.randint(0, 1000 - size[0]), random.randint(0, 1000 - size[1])),
+                                phrase_label.convert("RGBA"))
             pil_image.save(name)
-            random_style_folder = random.choice(os.listdir("imagereturner/styles"))
-            random_style = random.choice(os.listdir(f"imagereturner/styles/{random_style_folder}"))
+            print(tags)
+            if tags:
+                tags = tags[0]
+                random_style = random.choice(os.listdir(f"imagereturner/styles/{tags}"))
+                random_style_path = f"imagereturner/styles/{tags}/{random_style}"
+            else:
+                random_tags = random.choice(os.listdir(f"imagereturner/styles/"))
+                random_style = random.choice(os.listdir(f"imagereturner/styles/{random_tags}"))
+                random_style_path = f"imagereturner/styles/{random_tags}/{random_style}"
             print(random_style)
-            generated_image = style_transfer(name, f"imagereturner/styles/{random_style_folder}/{random_style}")
+            generated_image = style_transfer(name, random_style_path)
             generated_image.save(name)
             return FileResponse(open(name, "rb"))
         return HttpResponse(status=404)

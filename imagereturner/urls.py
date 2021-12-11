@@ -4,5 +4,6 @@ from . import views
 
 
 urlpatterns = [
-    path("", views.return_image)
+    path("", views.return_image),
+    path("tags", views.return_tags),
 ]
