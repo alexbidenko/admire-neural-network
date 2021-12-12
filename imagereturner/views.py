@@ -20,7 +20,9 @@ def vk_search(phrase, token):
         'v': '5.81',
     })
     if items := json.loads(result.text)["response"]["items"]:
+        time1 = time.time()
         result = sorted(random.choice(items)["sizes"], key=lambda x: x["height"], reverse=True)[0]["url"]
+        print(time.time() - time1)
         return result
     return None
 
@@ -28,6 +30,7 @@ def vk_search(phrase, token):
 def resizer(image_name):
     pil_image = Image.open(image_name).resize((1000, 1000)).convert('RGB')
     return pil_image
+
 
 def get_random_style():
     random_tags = random.choice(os.listdir(f"imagereturner/styles/"))
@@ -51,7 +54,7 @@ def get_label(phrase):
     label.save(name)
     generated_image = style_transfer(name, get_random_style(), if_text=True)
     generated_image.putalpha(255)
-    generated_image.convert("RGBA") #.quantize(method=2)
+    generated_image.convert("RGBA")  # .quantize(method=2)
     datas = generated_image.getdata()
 
     newData = []
@@ -74,7 +77,6 @@ def get_label(phrase):
     new_image = Image.open(name).resize(string_size_in_pixels)
     print("new size", new_image.size)
     return [new_image, new_image.size]
-
 
 
 def creation_date(path_to_file):
@@ -164,7 +166,7 @@ def return_image(request):
                 random_style_path = get_random_style()
             print(random_style_path)
             generated_image = style_transfer(name, random_style_path)
-            #generated_image.putalpha(256)
+            # generated_image.putalpha(256)
             phrase_label, size = get_label(phrase)
             print(size)
             if size[0] > 1000:
@@ -174,12 +176,12 @@ def return_image(request):
                 x, y = random.randint(0, 1000 - wight), random.randint(0, 1000 - height)
                 print(x, y, "cords")
                 generated_image.paste(phrase_label, (x, y),
-                                phrase_label.convert("RGBA"))
+                                      phrase_label.convert("RGBA"))
             else:
                 x, y = random.randint(0, 1000 - size[0]), random.randint(0, 1000 - size[1])
                 print(x, y, "cords")
                 generated_image.paste(phrase_label, (x, y),
-                                phrase_label.convert("RGBA"))
+                                      phrase_label.convert("RGBA"))
 
             datas = generated_image.getdata()
             newData = []
@@ -189,12 +191,13 @@ def return_image(request):
                     step = 1
                     while True:
                         try:
-                            next_item = datas[i+step]
-                            if not (next_item[0] in range(220, 256) and next_item[1] in range(220, 256) and next_item[2] in range(220, 256)):
+                            next_item = datas[i + step]
+                            if not (next_item[0] in range(220, 256) and next_item[1] in range(220, 256) and next_item[
+                                2] in range(220, 256)):
                                 newData.append((next_item[0], next_item[1], next_item[2]))
                                 break
                             else:
-                                step +=1
+                                step += 1
                         except Exception as ex:
                             print(ex)
                             break
