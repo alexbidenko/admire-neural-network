@@ -20,9 +20,15 @@ def vk_search(phrase, token):
         'v': '5.81',
     })
     if items := json.loads(result.text)["response"]["items"]:
-        result = sorted(random.choice(items)["sizes"], key=lambda x: x["height"], reverse=True)[0]["url"]
-        return result
-    return None
+        random_item = random.choice(items)
+        text = random_item["text"]
+        item = sorted(random_item["sizes"], key=lambda x: x["height"], reverse=True)
+        print(item)
+        item = item[0]
+        result = item["url"]
+        print(item)
+        return result, text
+    return None, None
 
 
 def resizer(image_name):
@@ -37,6 +43,10 @@ def get_random_style():
 
 
 def get_label(phrase):
+    phrase = phrase.split()
+    len_phrase = len(phrase)
+    random_num = random.randint(2, 5) if len_phrase>=5 else random.randint(2, len_phrase)
+    phrase = " ".join(random.choices(phrase, k=random_num))
     font_size = random.randint(100, 300)
     random_font_file = random.choice(os.listdir("imagereturner/fonts"))
     print(random_font_file)
@@ -119,7 +129,7 @@ def return_image(request):
         phrase = request["phrase"]
         print(phrase)
         tags = request["tags"]
-        result = vk_search(phrase, access_token)
+        result, text = vk_search(phrase, access_token)
         if result:
             img_data = requests.get(result).content
             name = f"trash/{uuid.uuid4()}.png"
@@ -136,7 +146,7 @@ def return_image(request):
                 random_style_path = get_random_style()
             print(random_style_path)
             generated_image = style_transfer(name, random_style_path)
-            phrase_label, size = get_label(phrase)
+            phrase_label, size = get_label(text)
             if size[0] > 1000:
                 wight = random.randint(800, 900)
                 height = int(size[1] * wight / size[0])

@@ -117,7 +117,7 @@ for layer in model.layers:
 
 def style_transfer(content_path,
                    style_path,
-                   num_iterations=20,
+                   num_iterations=1,
                    content_weight=1e3,
                    style_weight=1e-2, if_text=False):
     style_features, content_features = get_feature_representations(model, content_path, style_path, if_text=if_text)
