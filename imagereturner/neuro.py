@@ -19,7 +19,7 @@ tf.executing_eagerly()
 
 def load_img(path_to_img):
     img = Image.open(path_to_img)
-    img = img.resize((512, 512), Image.ANTIALIAS)
+    img = img.resize((200, 400), Image.ANTIALIAS)
     img = kp_image.img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return img
@@ -114,7 +114,7 @@ for layer in model.layers:
 
 def style_transfer(content_path,
                    style_path,
-                   num_iterations=20,
+                   num_iterations=400,
                    content_weight=1e3,
                    style_weight=1e-2):
     style_features, content_features = get_feature_representations(model, content_path, style_path)
