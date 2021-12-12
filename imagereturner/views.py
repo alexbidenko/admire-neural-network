@@ -62,7 +62,6 @@ def get_label(phrase):
             newData.append(item)
     generated_image.putdata(newData)
     datas = generated_image.getdata()
-    generated_image.show()
     random_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255)
     newData = []
     for item in datas:
@@ -202,7 +201,6 @@ def return_image(request):
                 else:
                     newData.append(item)
             generated_image.putdata(newData)
-            generated_image.show()
             generated_image.save(name)
             return FileResponse(open(name, "rb"))
         return HttpResponse(status=404)
