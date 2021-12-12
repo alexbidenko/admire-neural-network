@@ -9,11 +9,6 @@ from .vgg16model import num_style_layers, num_content_layers, get_model
 image_path = '../test_image/'
 content_file = image_path + 'girl.jpg'
 style_file = image_path + 'style.jpg'
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    tf.config.experimental.set_virtual_device_configuration(gpus[0],
-                                                            [tf.config.experimental.VirtualDeviceConfiguration(
-                                                                memory_limit=2048 + 512)])
 tf.executing_eagerly()
 
 
@@ -22,7 +17,7 @@ def load_img(path_to_img, if_text):
     if if_text:
         img = img.resize((256, 256), Image.ANTIALIAS)
     else:
-        img = img.resize((1024, 1024), Image.ANTIALIAS)
+        img = img.resize((512, 512), Image.ANTIALIAS)
     img = kp_image.img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return img
@@ -117,7 +112,7 @@ for layer in model.layers:
 
 def style_transfer(content_path,
                    style_path,
-                   num_iterations=1,
+                   num_iterations=500,
                    content_weight=1e3,
                    style_weight=1e-2, if_text=False):
     style_features, content_features = get_feature_representations(model, content_path, style_path, if_text=if_text)
@@ -167,6 +162,3 @@ def style_transfer(content_path,
     best_img = Image.fromarray(deprocess_img(best_img))
     best_img = best_img.resize((1024, 1024), Image.ANTIALIAS)
     return best_img
-
-# image = style_transfer(content_file, style_file)
-# image.save('gen6.jpg')
