@@ -17,16 +17,19 @@ if gpus:
 tf.executing_eagerly()
 
 
-def load_img(path_to_img):
-    img = Image.open(path_to_img)
-    img = img.resize((512, 512), Image.ANTIALIAS)
+def load_img(path_to_img, if_text):
+    img = Image.open(path_to_img).convert("RGB")
+    if if_text:
+        img = img.resize((256, 256), Image.ANTIALIAS)
+    else:
+        img = img.resize((512, 512), Image.ANTIALIAS)
     img = kp_image.img_to_array(img)
     img = np.expand_dims(img, axis=0)
     return img
 
 
-def load_and_process_img(path_to_img):
-    img = load_img(path_to_img)
+def load_and_process_img(path_to_img, if_text):
+    img = load_img(path_to_img, if_text=if_text)
     img = tf.keras.applications.vgg19.preprocess_input(img)
     return img
 
@@ -67,9 +70,9 @@ def get_style_loss(base_style, gram_target):
     return tf.reduce_mean(tf.square(gram_style - gram_target))  # / (4. * (channels ** 2) * (width * height) ** 2)
 
 
-def get_feature_representations(model, content_path, style_path):
-    content_image = load_and_process_img(content_path)
-    style_image = load_and_process_img(style_path)
+def get_feature_representations(model, content_path, style_path, if_text):
+    content_image = load_and_process_img(content_path, if_text=if_text)
+    style_image = load_and_process_img(style_path, if_text=if_text)
     stack_images = np.concatenate([style_image, content_image], axis=0)
     model_outputs = model(stack_images)
     style_features = [style_layer[0] for style_layer in model_outputs[:num_style_layers]]
@@ -114,13 +117,13 @@ for layer in model.layers:
 
 def style_transfer(content_path,
                    style_path,
-                   num_iterations=20,
+                   num_iterations=5,
                    content_weight=1e3,
-                   style_weight=1e-2):
-    style_features, content_features = get_feature_representations(model, content_path, style_path)
+                   style_weight=1e-2, if_text=False):
+    style_features, content_features = get_feature_representations(model, content_path, style_path, if_text=if_text)
     gram_style_features = [gram_matrix(style_feature) for style_feature in style_features]
 
-    init_image = load_and_process_img(content_path)
+    init_image = load_and_process_img(content_path, if_text=if_text)
     init_image = tf.Variable(init_image, dtype=tf.float32)
 
     opt = tf.optimizers.Adam(learning_rate=10.0)
