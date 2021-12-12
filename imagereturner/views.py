@@ -29,6 +29,12 @@ def resizer(image_name):
     pil_image = Image.open(image_name).resize((1000, 1000)).convert('RGB')
     return pil_image
 
+def get_random_style():
+    random_tags = random.choice(os.listdir(f"imagereturner/styles/"))
+    random_style = random.choice(os.listdir(f"imagereturner/styles/{random_tags}"))
+    random_style_path = f"imagereturner/styles/{random_tags}/{random_style}"
+    return random_style_path
+
 
 def get_label(phrase):
     font_size = random.randint(100, 300)
@@ -36,11 +42,39 @@ def get_label(phrase):
     print(random_font_file)
     font = ImageFont.truetype(f"imagereturner/fonts/{random_font_file}", font_size)
     string_size_in_pixels = font.getsize(phrase)
-    label = Image.new(size=string_size_in_pixels, mode="RGBA")
+    print("start size", string_size_in_pixels)
+    label = Image.new(size=string_size_in_pixels, mode="RGB", color="white")
     ImageDraw.Draw(label).text((0, 0), phrase,
-                               (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
+                               (0, 0, 0),
                                font=font)
-    return [label, string_size_in_pixels]
+    name = f"trash/text{uuid.uuid4()}.png"
+    label.save(name)
+    generated_image = style_transfer(name, get_random_style(), if_text=True)
+    generated_image.putalpha(255)
+    generated_image.convert("RGBA") #.quantize(method=2)
+    datas = generated_image.getdata()
+
+    newData = []
+    for item in datas:
+        if item[0] in range(150, 255) or item[1] in range(150, 255) or item[2] in range(150, 255):
+            newData.append((255, 255, 255, 0))
+        else:
+            newData.append(item)
+    generated_image.putdata(newData)
+    datas = generated_image.getdata()
+    random_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255)
+    newData = []
+    for item in datas:
+        if item[0] != 255 and item[1] != 255 and item[2] != 255:
+            newData.append(random_color)
+        else:
+            newData.append(item)
+    generated_image.putdata(newData)
+    generated_image.save(name)
+    new_image = Image.open(name).resize(string_size_in_pixels)
+    print("new size", new_image.size)
+    return [new_image, new_image.size]
+
 
 
 def creation_date(path_to_file):
@@ -64,8 +98,6 @@ def delete_old_files(filename):
 
 def return_tags(request):
     if request.method == "GET":
-        #folder_list = os.listdir("imagereturner/styles")
-        #json_list = {"tags": folder_list}
         tags = [
             {
                 "value": "abstractions",
@@ -122,16 +154,6 @@ def return_image(request):
             with open(name, 'wb') as handler:
                 handler.write(img_data)
             pil_image = resizer(image_name=name)
-            phrase_label, size = get_label(phrase)
-            if size[0] > 1000:
-                wight = random.randint(800, 900)
-                height = int(size[1] * wight / size[0])
-                phrase_label = phrase_label.resize((wight, height))
-                pil_image.paste(phrase_label, (random.randint(0, 1000 - wight), random.randint(0, 1000 - height)),
-                                phrase_label.convert("RGBA"))
-            else:
-                pil_image.paste(phrase_label, (random.randint(0, 1000 - size[0]), random.randint(0, 1000 - size[1])),
-                                phrase_label.convert("RGBA"))
             pil_image.save(name)
             print(tags)
             if tags:
@@ -139,11 +161,46 @@ def return_image(request):
                 random_style = random.choice(os.listdir(f"imagereturner/styles/{tags}"))
                 random_style_path = f"imagereturner/styles/{tags}/{random_style}"
             else:
-                random_tags = random.choice(os.listdir(f"imagereturner/styles/"))
-                random_style = random.choice(os.listdir(f"imagereturner/styles/{random_tags}"))
-                random_style_path = f"imagereturner/styles/{random_tags}/{random_style}"
-            print(random_style)
+                random_style_path = get_random_style()
+            print(random_style_path)
             generated_image = style_transfer(name, random_style_path)
+            #generated_image.putalpha(256)
+            phrase_label, size = get_label(phrase)
+            print(size)
+            if size[0] > 1000:
+                wight = random.randint(800, 900)
+                height = int(size[1] * wight / size[0])
+                phrase_label = phrase_label.resize((wight, height))
+                x, y = random.randint(0, 1000 - wight), random.randint(0, 1000 - height)
+                print(x, y, "cords")
+                generated_image.paste(phrase_label, (x, y),
+                                phrase_label.convert("RGBA"))
+            else:
+                x, y = random.randint(0, 1000 - size[0]), random.randint(0, 1000 - size[1])
+                print(x, y, "cords")
+                generated_image.paste(phrase_label, (x, y),
+                                phrase_label.convert("RGBA"))
+
+            datas = generated_image.getdata()
+            newData = []
+            for i in range(len(datas)):
+                item = datas[i]
+                if item[0] in range(220, 256) and item[1] in range(220, 256) and item[2] in range(220, 256):
+                    step = 1
+                    while True:
+                        try:
+                            next_item = datas[i+step]
+                            if not (next_item[0] in range(220, 256) and next_item[1] in range(220, 256) and next_item[2] in range(220, 256)):
+                                newData.append((next_item[0], next_item[1], next_item[2]))
+                                break
+                            else:
+                                step +=1
+                        except Exception as ex:
+                            print(ex)
+                            break
+                else:
+                    newData.append(item)
+            generated_image.putdata(newData)
             generated_image.save(name)
             return FileResponse(open(name, "rb"))
         return HttpResponse(status=404)
