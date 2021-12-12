@@ -23,10 +23,8 @@ def vk_search(phrase, token):
         random_item = random.choice(items)
         text = random_item["text"]
         item = sorted(random_item["sizes"], key=lambda x: x["height"], reverse=True)
-        print(item)
         item = item[0]
         result = item["url"]
-        print(item)
         return result, text
     return None, None
 
@@ -54,7 +52,7 @@ def get_label(phrase):
     string_size_in_pixels = font.getsize(phrase)
     label = Image.new(size=string_size_in_pixels, mode="RGBA")
     ImageDraw.Draw(label).text((0, 0), phrase,
-                               (random.randint(0, 1), random.randint(0,1), random.randint(0, 1)),
+                               (random.randint(0, 255), random.randint(0,255), random.randint(0, 255)),
                                font=font)
     return [label, string_size_in_pixels]
 
